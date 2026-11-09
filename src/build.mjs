@@ -36,7 +36,9 @@ const iconButton = (id, name, label, extra = "") =>
   `<button id="${id}" class="icon-button" type="button" title="${label}" aria-label="${label}" ${extra}>${icon(name)}</button>`;
 
 /* ---------- 校验 ---------- */
-function validate(slides, stages, deckFile) {
+const ROLES = new Set(["main", "detail", "reference"]);
+
+function validate(slides, stages, deckFile, logic = []) {
   const problems = [];
   const ids = new Set();
   let seconds = 0;
@@ -63,9 +65,22 @@ function validate(slides, stages, deckFile) {
         (typeof slide.transition !== "string" || !slide.transition.trim())) {
       problems.push(`${at}：transition 必须是非空字符串`);
     }
+    if (slide.role !== undefined && !ROLES.has(slide.role)) {
+      problems.push(`${at}：role 只能是 main / detail / reference`);
+    }
     seconds += slide.seconds || 0;
   });
   if (!slides.length) problems.push("一页都没有");
+  if (!Array.isArray(logic)) {
+    problems.push("logic 必须是数组");
+  } else {
+    logic.forEach((row, index) => {
+      const at = `logic 第 ${index + 1} 行`;
+      for (const key of ["range", "gained", "open"]) {
+        if (typeof row?.[key] !== "string" || !row[key].trim()) problems.push(`${at}：缺少 ${key}`);
+      }
+    });
+  }
   return {problems, seconds};
 }
 
@@ -96,18 +111,19 @@ async function loadContent(deckDir) {
 
   const meta = body.meta || module.meta || {};
   const stages = body.stages || module.stages || [];
+  const logic = body.logic || module.logic || [];
   const slides = typeof body.slides === "function" ? await body.slides(helpers) : body.slides || module.slides;
-  return {meta, stages, slides, image};
+  return {meta, stages, logic, slides, image};
 }
 
 /* ---------- 主流程 ---------- */
 export async function buildDeck({dir = ".", out, quiet = false} = {}) {
   const deckDir = path.resolve(dir);
   const outDir = out ? path.resolve(out) : deckDir;
-  const {meta, stages, slides} = await loadContent(deckDir);
+  const {meta, stages, logic, slides} = await loadContent(deckDir);
   const contentFile = path.join(deckDir, "content.mjs");
 
-  const {problems, seconds: totalSeconds} = validate(slides, stages, contentFile);
+  const {problems, seconds: totalSeconds} = validate(slides, stages, contentFile, logic);
   if (problems.length) {
     const error = new Error(`构建失败，${problems.length} 个问题：\n` + problems.map(problem => `  · ${problem}`).join("\n"));
     error.problems = problems;
@@ -129,14 +145,21 @@ export async function buildDeck({dir = ".", out, quiet = false} = {}) {
     <footer class="slide-footer"><span>${escape(slide.footer || meta.title || "")}</span><span>${String(index + 1).padStart(2, "0")} / ${slides.length}</span></footer>
   </section>`).join("\n");
 
-  const overviewItems = slides.map((slide, index) => `
-  ${Number.isInteger(slide.stage) && slide.stage !== slides[index - 1]?.stage
-    ? `<p class="overview-section">${escape(stages[slide.stage])}</p>` : ""}
-  <button class="overview-item" type="button"${index === 0 ? ' aria-current="page"' : ""}>
+  const overviewItems = slides.flatMap((slide, index) => {
+    const block = [];
+    if (Number.isInteger(slide.stage) && slide.stage !== slides[index - 1]?.stage) {
+      block.push(`<p class="overview-section">${escape(stages[slide.stage])}</p>`);
+    }
+    if (slide.role === "reference" && slides[index - 1]?.role !== "reference") {
+      block.push('<p class="overview-section">参考文献</p>');
+    }
+    block.push(`<button class="overview-item" type="button"${index === 0 ? ' aria-current="page"' : ""}>
     <span class="overview-number">${String(index + 1).padStart(2, "0")}</span>
     <span class="overview-heading">${escape(slide.heading)}</span>
     ${icon("arrow-up-right")}
-  </button>`).join("\n");
+  </button>`);
+    return block;
+  }).join("\n  ");
 
   const metadata = {
     title: meta.title || "未命名演示",
@@ -245,18 +268,39 @@ export async function buildDeck({dir = ".", out, quiet = false} = {}) {
   const starts = [];
   slides.reduce((acc, slide) => { starts.push(acc); return acc + slide.seconds; }, 0);
 
+  const cell = text => String(text).replace(/\|/g, "\\|");
+  const roleLabel = slide => slide.role === "detail" ? "案例" : slide.role === "reference" ? "参考" : "主线";
+  const mainCount = slides.filter(slide => !slide.role || slide.role === "main").length;
+  const detailCount = slides.filter(slide => slide.role === "detail").length;
+  const referenceCount = slides.filter(slide => slide.role === "reference").length;
+  const mixed = detailCount > 0 || referenceCount > 0;
+  const roleParts = [];
+  if (detailCount) roleParts.push(`${detailCount} 页主题案例`);
+  if (referenceCount) roleParts.push(`${referenceCount} 页参考文献`);
+  const roleNote = roleParts.length ? `含 ${mainCount} 页主线、${roleParts.join("、")}。` : "";
+
   const script = [
     `# ${metadata.title}`,
     "",
     ...(metadata.subtitle ? [`> ${metadata.subtitle}`, ""] : []),
-    `共 ${slides.length} 页，计划 ${Math.round(totalSeconds / 60)} 分钟（${mmss(totalSeconds)}）。由 html-deck ${PACKAGE.version} 从 content.mjs 生成。`,
+    `共 ${slides.length} 页，计划 ${Math.round(totalSeconds / 60)} 分钟（${mmss(totalSeconds)}）。${roleNote}由 html-deck ${PACKAGE.version} 从 content.mjs 生成。`,
     "",
+    ...(logic.length ? [
+      "## 讲述逻辑",
+      "",
+      "| 页面 | 这一段得到什么 | 尚未解决什么 |",
+      "| --- | --- | --- |",
+      ...logic.map(row => `| ${cell(row.range)} | ${cell(row.gained)} | ${cell(row.open)} |`),
+      "",
+    ] : []),
     "## 时长一览",
     "",
-    "| 页 | 标题 | 计划 | 累计 |",
-    "| --- | --- | --- | --- |",
-    ...slides.map((slide, index) =>
-      `| ${String(index + 1).padStart(2, "0")} | ${slide.heading.replace(/\|/g, "\\|")} | ${mmss(slide.seconds)} | ${mmss(starts[index] + slide.seconds)} |`),
+    ...(mixed
+      ? ["| 页 | 标题 | 类型 | 计划 | 累计 |", "| --- | --- | --- | --- | --- |"]
+      : ["| 页 | 标题 | 计划 | 累计 |", "| --- | --- | --- | --- |"]),
+    ...slides.map((slide, index) => mixed
+      ? `| ${String(index + 1).padStart(2, "0")} | ${cell(slide.heading)} | ${roleLabel(slide)} | ${mmss(slide.seconds)} | ${mmss(starts[index] + slide.seconds)} |`
+      : `| ${String(index + 1).padStart(2, "0")} | ${cell(slide.heading)} | ${mmss(slide.seconds)} | ${mmss(starts[index] + slide.seconds)} |`),
     "",
     ...slides.flatMap((slide, index) => {
       const spoken = slide.script === undefined

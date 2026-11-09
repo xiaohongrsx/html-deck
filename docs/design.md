@@ -55,7 +55,7 @@ elapsed = accumulated + (now - startedAt)
 
 `src/build.mjs` 读 `content.mjs` → 校验 → 内联 → 写出两个文件：`index.html` 和 `讲稿.md`（口播稿 + 时长表）。
 
-1. 校验：`id` 唯一、`heading` / `notes` 非空、`seconds` 是正整数、`stage` 下标在 `stages` 范围内
+1. 校验：`id` 唯一、`heading` / `notes` 非空、`seconds` 是正整数、`stage` 下标在 `stages` 范围内、`role` 只能是 `main` / `detail` / `reference`、`logic` 每行字段齐全
 2. 内联：`deck.css`、`player.js`、`theme.css`、图片（base64）、元数据 JSON
 3. 任何一条校验失败直接 `throw`，不产出半成品
 

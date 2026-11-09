@@ -66,11 +66,17 @@ html-deck build --open
 export const meta = {title: "标题", subtitle: "副标题", prepared: "2026-11-09"};
 export const stages = ["开场", "方法", "结果"];    // 顶部导轨的环节名
 
+// 可选：讲述逻辑，生成到 讲稿.md 开头
+export const logic = [
+  {range: "1–2", gained: "说清要回答什么", open: "别人做到哪一步"},
+];
+
 export const slides = ({code, image}) => [
   {
     id: "cover",              // 锚点 #slide-cover，别用页码
     short: "封面",             // 底栏和讲者视图里的短标题
     kind: "cover",            // 可选：cover 会跳过大标题排版
+    role: "main",             // 可选：main（默认）/ detail 主题案例 / reference 参考文献
     stage: null,              // 环节下标；null = 不显示导轨
     heading: "标题",           // 进目录、讲者视图
     seconds: 60,              // 计划秒数，用来算累计计划时间
@@ -83,6 +89,8 @@ export const slides = ({code, image}) => [
   },
 ];
 ```
+
+`role` 只影响讲稿和目录：`reference` 页会在目录里单独起一节「参考文献」，讲稿开头会写「含 N 页主线、M 页主题案例」；`detail` 会在时长表里标成「案例」。不写就是主线，老 deck 不用改。
 
 `slides` 也可以直接写成数组（`export const slides = [...]`），需要图片内联时才用函数形式。
 
@@ -106,7 +114,8 @@ image("loss.png")                        // 读 images/loss.png → data:image/p
 
 `build` 除了 `index.html`，还会生成 `讲稿.md` —— 一份可以直接打印、照着讲的口播稿。
 
-- 开头是**时长一览**表：每页计划时长 + 累计到这一页是多少分钟
+- 开头是**讲述逻辑**表（来自 `logic`）：哪几页负责得到什么、还留着什么没解决
+- 然后是**时长一览**表：每页计划时长 + 累计到这一页是多少分钟；有 `role` 时多一列「类型」
 - 每页一节：页号、标题、时间区间（`02:20 – 04:20 · 计划 02:00`）
 - 正文优先用 `script`（口播稿）；这一页没写 `script` 就导出 `notes`
 - 有 `transition` 会加粗一句「过渡：…」，有 `sources` 会列「来源：…」

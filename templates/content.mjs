@@ -12,6 +12,13 @@ export const meta = {
 // 顶部导轨的环节名，按顺序显示；stage 用下标引用
 export const stages = ["开场", "方法", "结果", "下一步"];
 
+// 可选：讲述逻辑，生成到 讲稿.md 开头。range 写页码范围，gained/open 各一句话。
+export const logic = [
+  {range: "1–2", gained: "说清要回答什么问题", open: "这个问题目前别人做到哪一步"},
+  {range: "3–4", gained: "给出我们的做法和设置", open: "结果到底差多少"},
+  {range: "5", gained: "确认结论成立", open: "下一步怎么验证"},
+];
+
 export const slides = ({code, image}) => [
   {
     id: "cover",
