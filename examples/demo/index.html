@@ -415,12 +415,12 @@ body.presenter .speaker-panel {
   <h1>一句话说清这份<br><em>材料在讲什么</em></h1>
   <p class="cover-sub">副标题可以写研究问题、数据规模或结论的版本号。<br>两行以内，不要超过三行。</p>
   <div class="cover-stats">
-    <div><b>12</b><span>页</span></div>
-    <div><b>20</b><span>分钟</span></div>
+    <div><b>7</b><span>页</span></div>
+    <div><b>10</b><span>分钟</span></div>
     <div><b>3</b><span>个主要结论</span></div>
   </div>
 </div></div>
-    <footer class="slide-footer"><span>汇报人 · 2026</span><span>01 / 5</span></footer>
+    <footer class="slide-footer"><span>汇报人 · 2026</span><span>01 / 7</span></footer>
   </section>
 
   <section id="slide-summary" class="slide" data-slide="1" hidden inert aria-hidden="true" aria-label="先给结论，再给证据">
@@ -441,7 +441,7 @@ body.presenter .speaker-panel {
   </tbody>
 </table>
 <div class="callout">下面每一页都能回答「这一页在支撑上面哪一条」。答不上来的页，删掉。</div></div>
-    <footer class="slide-footer"><span>每一页只讲一件事</span><span>02 / 5</span></footer>
+    <footer class="slide-footer"><span>每一页只讲一件事</span><span>02 / 7</span></footer>
   </section>
 
   <section id="slide-setup" class="slide" data-slide="2" hidden inert aria-hidden="true" aria-label="把设置讲清楚，比讲结果重要">
@@ -464,7 +464,7 @@ body.presenter .speaker-panel {
 </table>
 <p class="tiny">脚注写清楚哪些是复现、哪些引用自原论文，避免被追问时说不清。</p>
 <div class="callout">时间不够时只讲「数据」这一行——它是后面所有结论的前提，其余三行留给提问环节。</div></div>
-    <footer class="slide-footer"><span>表格只留三列：变量、取值、说明</span><span>03 / 5</span></footer>
+    <footer class="slide-footer"><span>表格只留三列：变量、取值、说明</span><span>03 / 7</span></footer>
   </section>
 
   <section id="slide-result" class="slide" data-slide="3" hidden inert aria-hidden="true" aria-label="一张图讲完主要结果">
@@ -485,10 +485,26 @@ body.presenter .speaker-panel {
     <div class="callout">读图落点：先说轴，再说差，最后说边界——三句话讲完一张图，超过三句说明图没选对。</div>
   </div>
 </div></div>
-    <footer class="slide-footer"><span>图片放进 images/ 目录，构建时会自动内联成单文件</span><span>04 / 5</span></footer>
+    <footer class="slide-footer"><span>图片放进 images/ 目录，构建时会自动内联成单文件</span><span>04 / 7</span></footer>
   </section>
 
-  <section id="slide-next" class="slide" data-slide="4" hidden inert aria-hidden="true" aria-label="接下来做什么">
+  <section id="slide-case" class="slide" data-slide="4" hidden inert aria-hidden="true" aria-label="案例：一页讲不完时怎么拆">
+    <header><div class="story-position" aria-label="当前环节：结果"><span>开场</span><span class="sep">›</span><span>方法</span><span class="sep">›</span><span class="position-current">结果</span><span class="sep">›</span><span>下一步</span></div><h2>案例：一页讲不完时怎么拆</h2></header>
+    <div class="slide-content">
+<p class="lead">这一页原本和方法、结果挤在一起，<em>按「一页只回答一个问题」拆开</em>之后才讲得完。</p>
+<table class="table">
+  <thead><tr><th style="width:18%">页</th><th style="width:30%">只回答一个问题</th><th>证据放哪</th></tr></thead>
+  <tbody>
+    <tr><td>方法页</td><td>我们是怎么做的</td><td>设置表，三列以内</td></tr>
+    <tr><td>结果页</td><td>差多少、能不能被噪声解释</td><td>一张主图加一行结论</td></tr>
+    <tr><td>局限</td><td>什么时候不成立</td><td>写进讲者备注，不占版面</td></tr>
+  </tbody>
+</table>
+<div class="callout">判断标准：把标题、图、结论分别念一遍，三者说的不是同一件事，就该拆成两页。</div></div>
+    <footer class="slide-footer"><span>拆页的判断标准在最后那句 callout 里</span><span>05 / 7</span></footer>
+  </section>
+
+  <section id="slide-next" class="slide" data-slide="5" hidden inert aria-hidden="true" aria-label="接下来做什么">
     <header><div class="story-position" aria-label="当前环节：下一步"><span>开场</span><span class="sep">›</span><span>方法</span><span class="sep">›</span><span>结果</span><span class="sep">›</span><span class="position-current">下一步</span></div><h2>接下来做什么</h2></header>
     <div class="slide-content">
 <div class="steps">
@@ -503,7 +519,24 @@ html-deck check --sync       # 版心溢出 + 讲者视图同步
 html-deck <span class="k">export</span> --pdf       # 交给导师的版本
 html-deck <span class="k">export</span> --png       # 每页一张 <span class="n">2560</span>×<span class="n">1440</span>，贴进任何地方</pre>
 <div class="callout">三步里只有第一步是本周必须做完的；二和三可以并行，不要串成一条链。</div></div>
-    <footer class="slide-footer"><span>给明确的时间点，不要写「后续计划」</span><span>05 / 5</span></footer>
+    <footer class="slide-footer"><span>给明确的时间点，不要写「后续计划」</span><span>06 / 7</span></footer>
+  </section>
+
+  <section id="slide-reading" class="slide" data-slide="6" hidden inert aria-hidden="true" aria-label="延伸阅读">
+    <header><div class="story-position" aria-label="当前环节：下一步"><span>开场</span><span class="sep">›</span><span>方法</span><span class="sep">›</span><span>结果</span><span class="sep">›</span><span class="position-current">下一步</span></div><h2>延伸阅读</h2></header>
+    <div class="slide-content">
+<p class="lead">这套做法依赖的东西都不新：<em>查规范比查博客省时间</em>。</p>
+<table class="table">
+  <thead><tr><th style="width:26%">主题</th><th>出处</th></tr></thead>
+  <tbody>
+    <tr><td>transform 缩放</td><td>CSS Transforms Level 1（W3C）</td></tr>
+    <tr><td>窗口间通信</td><td>HTML Standard · postMessage / MessageEvent</td></tr>
+    <tr><td>单文件与 CSP</td><td>Content Security Policy Level 3</td></tr>
+    <tr><td>打印与分页</td><td>CSS Paged Media / <code>@page</code></td></tr>
+  </tbody>
+</table>
+<div class="callout">本项目自己的实现说明在 <code>docs/design.md</code>：读那一份比读这四份更省时间。</div></div>
+    <footer class="slide-footer"><span>文档比博客可靠，版本号一起记下来</span><span>07 / 7</span></footer>
   </section></div></div>
       <aside class="speaker-panel" aria-label="讲者备注">
         <div class="speaker-clocks">
@@ -520,7 +553,7 @@ html-deck <span class="k">export</span> --png       # 每页一张 <span class="
     <nav class="toolbar" aria-label="演示控制">
       <div class="toolbar-group">
         <button id="previous-button" class="icon-button" type="button" title="上一页" aria-label="上一页" disabled><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
-        <span id="page-status" class="page-status" aria-live="polite">01 / 5</span>
+        <span id="page-status" class="page-status" aria-live="polite">01 / 7</span>
         <button id="next-button" class="icon-button" type="button" title="下一页" aria-label="下一页" ><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
       </div>
       <span id="toolbar-title" class="toolbar-title">封面</span>
@@ -562,10 +595,21 @@ html-deck <span class="k">export</span> --png       # 每页一张 <span class="
     <span class="overview-heading">一张图讲完主要结果</span>
     <svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
   </button>
-  <p class="overview-section">下一步</p>
   <button class="overview-item" type="button">
     <span class="overview-number">05</span>
+    <span class="overview-heading">案例：一页讲不完时怎么拆</span>
+    <svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+  </button>
+  <p class="overview-section">下一步</p>
+  <button class="overview-item" type="button">
+    <span class="overview-number">06</span>
     <span class="overview-heading">接下来做什么</span>
+    <svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+  </button>
+  <p class="overview-section">参考文献</p>
+  <button class="overview-item" type="button">
+    <span class="overview-number">07</span>
+    <span class="overview-heading">延伸阅读</span>
     <svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
   </button></div>
   </dialog>
@@ -584,7 +628,7 @@ html-deck <span class="k">export</span> --png       # 每页一张 <span class="
   </dialog>
   <div id="toast" class="toast" role="status" hidden></div>
   <div id="blackout" class="blackout" hidden aria-label="黑屏"></div>
-  <script id="deck-metadata" type="application/json">{"title":"示例演示：从内容到单文件","subtitle":"一句话说清这份材料要回答什么问题","prepared":"2026-11-09","version":"0.1.0","totalSeconds":490,"stages":["开场","方法","结果","下一步"],"slides":[{"id":"cover","heading":"示例演示：从内容到单文件","short":"封面","stage":null,"seconds":40,"notes":["开场不要念标题。用一句话说清：这次汇报要回答什么问题，为什么现在要回答它。","讲者视图里的这一段只给你自己看，投影片上不会出现。"],"sources":["数据来源：填写实验编号 / 论文标题"]},{"id":"summary","heading":"先给结论，再给证据","short":"结论先行","stage":"开场","seconds":100,"notes":["这一页是全场最容易被记住的一页，写完再回头检查一遍：三条结论之间有没有重叠。","卡片的字号已经调好，超过三行就会挤；写不下说明结论还不够锋利。"],"sources":[]},{"id":"setup","heading":"把设置讲清楚，比讲结果重要","short":"实验设置","stage":"方法","seconds":120,"notes":["设置页不要念表格，挑两个最容易被质疑的点说：为什么用这个数据、为什么没调参。","评审最喜欢问的就是「你是不是只在自己有利的设置上比」。"],"sources":["原论文 Table 2","本地复现脚本 run_setup.sh"]},{"id":"result","heading":"一张图讲完主要结果","short":"主要结果","stage":"结果","seconds":150,"notes":["这页的目标不是让听众看清每个数字，是让他们相信「差异是真的」。所以先讲轴和基线，再讲差。","如果被问到误差棒，要能立刻说清楚是自己算的还是原论文报的。"],"sources":["images/sample.svg（占位图，记得替换）"]},{"id":"next","heading":"接下来做什么","short":"下一步","stage":"下一步","seconds":80,"notes":["结尾别写「谢谢」，写下一步和需要谁配合。","这一页的代码块是提示：这份文件本身就可以用三条命令维护。"],"sources":[]}]}</script>
+  <script id="deck-metadata" type="application/json">{"title":"示例演示：从内容到单文件","subtitle":"一句话说清这份材料要回答什么问题","prepared":"2026-11-09","version":"0.1.0","totalSeconds":600,"stages":["开场","方法","结果","下一步"],"slides":[{"id":"cover","heading":"示例演示：从内容到单文件","short":"封面","stage":null,"seconds":40,"notes":["开场不要念标题。用一句话说清：这次汇报要回答什么问题，为什么现在要回答它。","讲者视图里的这一段只给你自己看，投影片上不会出现。"],"sources":["数据来源：填写实验编号 / 论文标题"]},{"id":"summary","heading":"先给结论，再给证据","short":"结论先行","stage":"开场","seconds":100,"notes":["这一页是全场最容易被记住的一页，写完再回头检查一遍：三条结论之间有没有重叠。","卡片的字号已经调好，超过三行就会挤；写不下说明结论还不够锋利。"],"sources":[]},{"id":"setup","heading":"把设置讲清楚，比讲结果重要","short":"实验设置","stage":"方法","seconds":120,"notes":["设置页不要念表格，挑两个最容易被质疑的点说：为什么用这个数据、为什么没调参。","评审最喜欢问的就是「你是不是只在自己有利的设置上比」。"],"sources":["原论文 Table 2","本地复现脚本 run_setup.sh"]},{"id":"result","heading":"一张图讲完主要结果","short":"主要结果","stage":"结果","seconds":150,"notes":["这页的目标不是让听众看清每个数字，是让他们相信「差异是真的」。所以先讲轴和基线，再讲差。","如果被问到误差棒，要能立刻说清楚是自己算的还是原论文报的。"],"sources":["images/sample.svg（占位图，记得替换）"]},{"id":"case","heading":"案例：一页讲不完时怎么拆","short":"案例：拆页","stage":"结果","seconds":70,"notes":["案例页的作用是示范「拆页」这个动作，不是补充新结论；讲的时候用 30 秒带过即可。","如果时间紧，这页可以整页跳过，主线不受影响——这就是主题案例的意思。"],"sources":[]},{"id":"next","heading":"接下来做什么","short":"下一步","stage":"下一步","seconds":80,"notes":["结尾别写「谢谢」，写下一步和需要谁配合。","这一页的代码块是提示：这份文件本身就可以用三条命令维护。"],"sources":[]},{"id":"reading","heading":"延伸阅读","short":"延伸阅读","stage":"下一步","seconds":40,"notes":["这页不讲，翻到说一句「出处都在这」就结束，把时间留给提问。","被问到「能不能改字号/换字体」，答案在 theme.css，不用翻规范。"],"sources":[]}]}</script>
   <script>/* ============================================================================
    player.js — 演示运行时
    职责：缩放画布 / 翻页 / 讲者视图双窗口同步 / 计时 / 目录 / 放大 / 打印

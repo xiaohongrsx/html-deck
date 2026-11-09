@@ -16,7 +16,8 @@ export const stages = ["开场", "方法", "结果", "下一步"];
 export const logic = [
   {range: "1–2", gained: "一句话说清这份材料要回答什么", open: "为什么这件事现在要回答"},
   {range: "3–4", gained: "给出设置和一张主图", open: "这个结论在什么边界内成立"},
-  {range: "5", gained: "落到下一步和分工", open: "谁在什么时间点交付"},
+  {range: "5", gained: "讲不完时怎么拆页（主题案例）", open: "拆完还缺哪一块"},
+  {range: "6–7", gained: "下一步、分工和延伸阅读", open: "谁在什么时间点交付"},
 ];
 
 export const slides = ({code, image}) => [
@@ -34,8 +35,8 @@ export const slides = ({code, image}) => [
   <h1>一句话说清这份<br><em>材料在讲什么</em></h1>
   <p class="cover-sub">副标题可以写研究问题、数据规模或结论的版本号。<br>两行以内，不要超过三行。</p>
   <div class="cover-stats">
-    <div><b>12</b><span>页</span></div>
-    <div><b>20</b><span>分钟</span></div>
+    <div><b>7</b><span>页</span></div>
+    <div><b>10</b><span>分钟</span></div>
     <div><b>3</b><span>个主要结论</span></div>
   </div>
 </div>`,
@@ -147,6 +148,38 @@ export const slides = ({code, image}) => [
   },
 
   {
+    id: "case",
+    short: "案例：拆页",
+    role: "detail",
+    stage: 2,
+    heading: "案例：一页讲不完时怎么拆",
+    seconds: 70,
+    footer: "拆页的判断标准在最后那句 callout 里",
+    html: `
+<p class="lead">这一页原本和方法、结果挤在一起，<em>按「一页只回答一个问题」拆开</em>之后才讲得完。</p>
+<table class="table">
+  <thead><tr><th style="width:18%">页</th><th style="width:30%">只回答一个问题</th><th>证据放哪</th></tr></thead>
+  <tbody>
+    <tr><td>方法页</td><td>我们是怎么做的</td><td>设置表，三列以内</td></tr>
+    <tr><td>结果页</td><td>差多少、能不能被噪声解释</td><td>一张主图加一行结论</td></tr>
+    <tr><td>局限</td><td>什么时候不成立</td><td>写进讲者备注，不占版面</td></tr>
+  </tbody>
+</table>
+<div class="callout">判断标准：把标题、图、结论分别念一遍，三者说的不是同一件事，就该拆成两页。</div>`,
+    notes: [
+      "案例页的作用是示范「拆页」这个动作，不是补充新结论；讲的时候用 30 秒带过即可。",
+      "如果时间紧，这页可以整页跳过，主线不受影响——这就是主题案例的意思。",
+    ],
+    script: [
+      "插一个案例。这一页原本和方法、结果挤在一起，讲的时候听众跟不上。",
+      "拆的原则很简单：一页只回答一个问题。方法页只讲怎么做，结果页只讲差多少。",
+      "局限性不用占版面，写进讲者备注就行，被问到再展开。",
+    ],
+    transition: "拆完之后，回到主线：接下来做什么。",
+    sources: [],
+  },
+
+  {
     id: "next",
     short: "下一步",
     stage: 3,
@@ -169,6 +202,37 @@ html-deck export --png       # 每页一张 2560×1440，贴进任何地方`)}
     notes: [
       "结尾别写「谢谢」，写下一步和需要谁配合。",
       "这一页的代码块是提示：这份文件本身就可以用三条命令维护。",
+    ],
+    sources: [],
+  },
+
+  {
+    id: "reading",
+    short: "延伸阅读",
+    role: "reference",
+    stage: 3,
+    heading: "延伸阅读",
+    seconds: 40,
+    footer: "文档比博客可靠，版本号一起记下来",
+    html: `
+<p class="lead">这套做法依赖的东西都不新：<em>查规范比查博客省时间</em>。</p>
+<table class="table">
+  <thead><tr><th style="width:26%">主题</th><th>出处</th></tr></thead>
+  <tbody>
+    <tr><td>transform 缩放</td><td>CSS Transforms Level 1（W3C）</td></tr>
+    <tr><td>窗口间通信</td><td>HTML Standard · postMessage / MessageEvent</td></tr>
+    <tr><td>单文件与 CSP</td><td>Content Security Policy Level 3</td></tr>
+    <tr><td>打印与分页</td><td>CSS Paged Media / <code>@page</code></td></tr>
+  </tbody>
+</table>
+<div class="callout">本项目自己的实现说明在 <code>docs/design.md</code>：读那一份比读这四份更省时间。</div>`,
+    notes: [
+      "这页不讲，翻到说一句「出处都在这」就结束，把时间留给提问。",
+      "被问到「能不能改字号/换字体」，答案在 theme.css，不用翻规范。",
+    ],
+    script: [
+      "最后一页是延伸阅读，不展开。",
+      "四个主题对应四个坑：缩放、窗口通信、单文件安全策略、打印分页。",
     ],
     sources: [],
   },
