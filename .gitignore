@@ -1,0 +1,16 @@
+# 依赖
+node_modules/
+
+# 系统垃圾
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 构建 / 自检产物（示例里的 index.html 和 讲稿.md 是故意提交的，便于直接打开）
+.preview/
+export/
+*.log
+
+# 本地参考资料，不属于这个仓库
+archive/
+rl-gradient-update-slides/

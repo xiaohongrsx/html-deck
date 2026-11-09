@@ -1,0 +1,974 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="generator" content="html-deck 0.1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>示例演示：从内容到单文件</title>
+  <style>/* ============================================================================
+   deck.css — HTML 演示引擎的基础版式
+   核心约定：画布永远 1280×720，所有尺寸按像素写死，自适应只发生在 --scale 上。
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+  --paper: #ffffff;
+  --ink: #202528;
+  --muted: #687278;
+  --line: #dde3e6;
+  --soft: #f4f6f7;
+  --red: #b43c35;
+  --blue: #28668f;
+  --green: #247361;
+  --scale: 1;
+  --page-width: 1280px;
+  --page-height: 720px;
+  font-family: "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+  font-synthesis: none;
+  letter-spacing: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body { background: var(--soft); color: var(--ink); overflow: hidden; }
+p, h1, h2, h3, h4, figure { margin: 0; }
+p { line-height: 1.62; }
+h1, h2, h3, h4 { letter-spacing: 0; }
+strong, b { font-weight: 650; }
+[hidden] { display: none !important; }
+button, input { font: inherit; }
+button { color: inherit; cursor: pointer; border: 0; background: none; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+a { color: inherit; text-underline-offset: 3px; }
+
+/* ---------- 外壳：内容区 + 底部工具栏 ---------- */
+.app { height: 100dvh; display: grid; grid-template-rows: minmax(0, 1fr) 56px; }
+.presentation-area {
+  display: flex; justify-content: center; align-items: center;
+  padding: 16px 22px 8px; min-height: 0; min-width: 0;
+}
+.frame {
+  position: relative; flex-shrink: 0;
+  width: var(--page-width); height: var(--page-height);
+  background: var(--paper); box-shadow: 0 2px 18px #20252810;
+}
+.slides { width: 1280px; height: 720px; transform: scale(var(--scale)); transform-origin: top left; }
+
+.toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; padding: 0 24px; background: var(--soft);
+}
+.toolbar-group { display: flex; align-items: center; gap: 9px; }
+.icon-button {
+  width: 38px; height: 38px; border-radius: 4px; display: grid; place-items: center;
+  color: var(--muted); background: transparent;
+}
+.icon-button:hover { background: #e6ebed; color: var(--ink); }
+.icon-button svg { width: 21px; height: 21px; }
+.page-status { font-size: 15px; font-variant-numeric: tabular-nums; min-width: 102px; text-align: center; color: var(--muted); }
+.toolbar-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 14px; }
+.clock-actions { display: flex; gap: 4px; align-items: center; margin-left: auto; }
+.progress { position: fixed; left: 0; right: 0; bottom: 0; height: 3px; background: #e2e7e9; }
+.progress-fill { height: 100%; width: 0; background: var(--red); transition: width 130ms ease; }
+
+/* ---------- 一页 ---------- */
+.slide {
+  width: 1280px; height: 720px; position: absolute; inset: 0;
+  padding: 42px 70px 26px; display: flex; flex-direction: column; gap: 18px;
+  background: var(--paper);
+}
+.slide h2 { font-size: 38px; line-height: 1.25; font-weight: 650; }
+.slide h2::after { content: ""; display: block; width: 60px; height: 3px; margin-top: 13px; background: var(--red); }
+
+/* 顶部环节导轨：让观众知道现在讲到哪一段 */
+.story-position { display: flex; align-items: center; gap: 7px; font-size: 13.5px; color: #9aa4a9; margin-bottom: 9px; }
+.story-position span { white-space: nowrap; }
+.story-position .position-current { color: var(--red); font-weight: 600; }
+.story-position .sep { color: #ccd4d7; }
+.slide-content { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 16px; }
+.slide-footer {
+  flex: 0 0 auto; padding-top: 11px; border-top: 1px solid var(--line);
+  color: var(--muted); font-size: 13.5px; line-height: 1.5;
+  display: flex; justify-content: space-between; gap: 24px;
+}
+.slide-footer span:last-child { font-variant-numeric: tabular-nums; }
+
+/* ---------- 排版元件 ---------- */
+.lead { font-size: 25px; line-height: 1.55; }
+.lead em { font-style: normal; color: var(--red); font-weight: 650; }
+.muted { color: var(--muted); }
+.accent { color: var(--red); }
+.blue { color: var(--blue); }
+.h3 { font-size: 21px; font-weight: 650; line-height: 1.4; }
+.tiny { font-size: 15px; color: var(--muted); line-height: 1.6; }
+
+.bullets { display: flex; flex-direction: column; gap: 13px; max-width: 1050px; }
+.bullets > div { position: relative; padding-left: 24px; font-size: 19.5px; line-height: 1.6; }
+.bullets > div::before {
+  content: ""; position: absolute; left: 4px; top: .62em;
+  width: 7px; height: 7px; border-radius: 50%; background: var(--red);
+}
+.bullets > div.blue-dot::before { background: var(--blue); }
+.bullets b { font-weight: 650; }
+
+/* 代码块 */
+.code {
+  margin: 0; padding: 15px 18px; background: #f7f9fa; border-left: 3px solid var(--red);
+  border-radius: 0 5px 5px 0; font-family: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 15.5px; line-height: 1.72; color: #2b3236; tab-size: 2; white-space: pre; overflow: hidden;
+}
+.code .k { color: var(--red); }
+.code .s { color: var(--green); }
+.code .c { color: #939da2; }
+.code .n { color: var(--blue); }
+
+/* 表格 */
+.table { width: 100%; border-collapse: collapse; font-size: 18px; }
+.table th {
+  text-align: left; font-weight: 600; font-size: 14.5px; color: var(--muted);
+  padding: 0 12px 9px; border-bottom: 1.5px solid var(--ink);
+}
+.table td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.45; }
+.table tr:last-child td { border-bottom: 0; }
+.table code, .mono { font-family: "JetBrains Mono", Consolas, monospace; font-size: .92em; }
+.table .num { font-variant-numeric: tabular-nums; color: var(--muted); width: 40px; }
+
+/* 卡片 */
+.cards { display: grid; gap: 18px; }
+.cards.c3 { grid-template-columns: repeat(3, 1fr); }
+.cards.c2 { grid-template-columns: repeat(2, 1fr); }
+.card { border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px; background: var(--paper); }
+.card .num { font-size: 13px; color: var(--red); font-variant-numeric: tabular-nums; letter-spacing: .06em; }
+.card .ttl { font-size: 20px; font-weight: 650; margin-top: 7px; line-height: 1.4; }
+.card .p { font-size: 16.5px; line-height: 1.62; color: var(--muted); margin-top: 9px; }
+.card.soft { background: #fafbfb; }
+
+.callout {
+  border-left: 3px solid var(--blue); background: #f5f9fb;
+  padding: 13px 17px; font-size: 17.5px; line-height: 1.62;
+}
+.callout.warn { border-left-color: var(--red); background: #fdf6f5; }
+
+.tag {
+  display: inline-block; padding: 2px 9px; border: 1px solid var(--line); border-radius: 999px;
+  font-size: 13.5px; color: var(--muted); line-height: 1.6; margin-right: 6px;
+}
+.tag.on { border-color: #e6c4c0; color: var(--red); background: #fdf6f5; }
+
+/* KPI */
+.kpis { display: flex; gap: 46px; align-items: flex-end; }
+.kpi b { display: block; font-size: 46px; line-height: 1; font-weight: 650; font-variant-numeric: tabular-nums; }
+.kpi span { display: block; font-size: 15px; color: var(--muted); margin-top: 8px; }
+.kpi.hot b { color: var(--red); }
+
+/* 两栏 */
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 34px; align-items: start; flex: 1; min-height: 0; }
+.split.stretch { align-items: stretch; }
+.split.wide-left { grid-template-columns: 1.15fr .85fr; }
+.stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* 假窗口 */
+.windows { display: grid; grid-template-columns: 1fr 74px 1fr; align-items: center; gap: 0; }
+.win { border: 1px solid var(--line); border-radius: 7px; overflow: hidden; background: #fff; box-shadow: 0 6px 18px #2025280d; }
+.win-bar { height: 27px; background: #eef2f3; display: flex; align-items: center; gap: 6px; padding: 0 11px; font-size: 11.5px; color: var(--muted); }
+.win-bar i { width: 7px; height: 7px; border-radius: 50%; background: #cfd7da; }
+.win-bar span { margin-left: 6px; }
+.win-body { padding: 15px; display: flex; flex-direction: column; gap: 8px; }
+.sk { height: 8px; border-radius: 3px; background: #e8edef; }
+.sk.w70 { width: 70%; } .sk.w45 { width: 45%; } .sk.w85 { width: 85%; } .sk.w55 { width: 55%; }
+.sk.thin { height: 5px; }
+.wire { display: grid; place-items: center; gap: 7px; }
+.wire .line { width: 100%; height: 1.5px; background: var(--line); position: relative; }
+.wire .line::before, .wire .line::after {
+  content: ""; position: absolute; top: -4px; border: 4.5px solid transparent;
+}
+.wire .line::before { left: 0; border-right-color: var(--muted); border-left-width: 0; }
+.wire .line::after { right: 0; border-left-color: var(--muted); border-right-width: 0; }
+.wire em { font-style: normal; font-size: 11.5px; color: var(--muted); text-align: center; line-height: 1.35; }
+
+/* 视口 / 画布示意 */
+.fit-demo { display: grid; place-items: center; flex: 1; }
+.fit-window {
+  width: 430px; height: 242px; border: 1.5px dashed #b9c3c7; border-radius: 6px;
+  display: grid; place-items: center; position: relative;
+  background: repeating-linear-gradient(45deg, #f7f9fa 0 8px, #fff 8px 16px);
+}
+.fit-window > span { position: absolute; top: 8px; left: 12px; font-size: 12px; color: var(--muted); }
+.fit-frame {
+  width: 344px; height: 193.5px; border: 1.5px solid var(--red); background: #fff;
+  display: grid; place-items: center; box-shadow: 0 3px 12px #b43c3514;
+}
+.fit-frame span { font-size: 13px; color: var(--red); font-variant-numeric: tabular-nums; }
+
+/* 论文图 / 截图：放进 figure 里，加 zoomable 就能点开放大 */
+.figure { display: flex; flex-direction: column; align-items: center; gap: 9px; min-height: 0; }
+.figure img { display: block; max-width: 100%; max-height: 360px; object-fit: contain; background: #fff; border-radius: 2px; }
+.figure figcaption { font-size: 13.5px; line-height: 1.55; color: var(--muted); text-align: center; max-width: 92%; }
+.figure.tall img { max-height: 420px; }
+.figure.short img { max-height: 240px; }
+.figure.fill { flex: 1; justify-content: center; }
+.figure.fill img { max-height: none; }
+
+/* 两栏里放图 + 说明的常见组合 */
+.split.ratio-6-4 { grid-template-columns: 1.5fr 1fr; }
+.split.ratio-4-6 { grid-template-columns: 1fr 1.5fr; }
+
+/* 分页示意 */
+.sheets { display: flex; gap: 16px; align-items: flex-end; }
+.sheet {
+  width: 150px; height: 84.375px; border: 1px solid var(--line); border-radius: 3px; background: #fff;
+  position: relative; display: grid; place-items: center;
+  font-family: "JetBrains Mono", Consolas, monospace; font-size: 12px; color: var(--muted);
+}
+.sheet::before { content: ""; position: absolute; inset: 7px 7px auto 7px; height: 3px; background: #eceff1; border-radius: 2px; }
+.sheet::after { content: ""; position: absolute; left: 7px; right: 30%; bottom: 8px; height: 3px; background: #eceff1; border-radius: 2px; }
+.sheet.flow { border-color: #e6c4c0; }
+
+/* 步骤 */
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.step { border-top: 2.5px solid var(--ink); padding-top: 13px; }
+.step b { display: block; font-size: 13px; color: var(--red); letter-spacing: .08em; }
+.step h4 { font-size: 20px; margin: 8px 0 7px; }
+.step p { font-size: 16px; color: var(--muted); line-height: 1.55; }
+
+/* 目录式页码条 */
+.chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip { border: 1px solid var(--line); border-radius: 4px; padding: 4px 10px; font-size: 14px; color: var(--muted); }
+.chip.on { border-color: var(--red); color: var(--red); background: #fdf6f5; }
+
+/* 封面 */
+.slide.cover { padding: 62px 76px 34px; justify-content: center; gap: 0; }
+.cover .kicker { font-size: 15px; letter-spacing: .16em; color: var(--red); margin-bottom: 26px; }
+.cover h1 { font-size: 74px; line-height: 1.14; font-weight: 650; }
+.cover h1 em { font-style: normal; color: var(--red); }
+.cover-sub { font-size: 22px; line-height: 1.6; color: var(--muted); margin-top: 26px; max-width: 860px; }
+.cover-stats { display: flex; gap: 54px; margin-top: 46px; padding-top: 26px; border-top: 1px solid var(--line); }
+.cover-stats b { display: block; font-size: 34px; line-height: 1; font-variant-numeric: tabular-nums; }
+.cover-stats span { display: block; font-size: 14px; color: var(--muted); margin-top: 7px; }
+
+/* ---------- 对话框 ---------- */
+dialog {
+  border: 1px solid var(--line); border-radius: 7px; color: var(--ink); background: var(--paper); padding: 0;
+  max-width: calc(100vw - 32px); max-height: calc(100dvh - 40px);
+}
+dialog::backdrop { background: #17212666; }
+.dialog-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  padding: 16px 22px; border-bottom: 1px solid var(--line);
+}
+.dialog-header h2 { font-size: 20px; font-weight: 600; }
+.overview-dialog { width: 760px; }
+.overview-list { padding: 8px 18px 16px; max-height: calc(100dvh - 150px); overflow: auto; }
+.overview-item {
+  display: grid; grid-template-columns: 46px 1fr 34px; align-items: center; gap: 12px;
+  width: 100%; padding: 12px 11px; text-align: left;
+  background: transparent; border-bottom: 1px solid var(--line);
+}
+.overview-item:hover { background: var(--soft); }
+.overview-item[aria-current="page"] { color: var(--red); }
+.overview-number { font-size: 15px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.overview-heading { font-size: 17.5px; line-height: 1.45; }
+.overview-item svg { width: 17px; height: 17px; }
+.overview-section { font-size: 14px; color: var(--muted); margin: 16px 11px 6px; }
+
+.zoom-dialog { width: calc(100vw - 52px); height: calc(100dvh - 52px); }
+.zoom-actions { display: flex; align-items: center; gap: 6px; }
+.zoom-value { min-width: 60px; text-align: center; font-size: 14.5px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.zoom-scroll {
+  overflow: auto; height: calc(100% - 70px); padding: 24px; background: #fbfcfc;
+  display: flex; align-items: flex-start; justify-content: flex-start;
+}
+#zoom-stage { margin: auto; flex: 0 0 auto; }
+#zoom-stage > * { max-width: none; }
+.zoomable { cursor: zoom-in; }
+.zoomable:hover { box-shadow: 0 0 0 2px #b43c3522, 0 4px 16px #20252814; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 68px; transform: translateX(-50%);
+  padding: 11px 19px; background: #202528; color: #fff; border-radius: 4px;
+  font-size: 14.5px; z-index: 10; max-width: calc(100vw - 40px); text-align: center;
+}
+.blackout { position: fixed; inset: 0; background: #101314; z-index: 50; }
+
+/* ---------- 讲者视图：同一个文件，第二种布局 ---------- */
+.speaker-panel { display: none; }
+body.presenter { overflow: auto; }
+body.presenter .app { grid-template-rows: minmax(0, 1fr) 58px; }
+body.presenter .presentation-area {
+  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, .8fr);
+  align-items: start; gap: 26px; padding: 24px; overflow: auto;
+}
+body.presenter .frame { align-self: start; }
+body.presenter .speaker-panel {
+  display: flex; flex-direction: column; gap: 20px; min-width: 0; max-height: 100%; overflow: auto;
+}
+.speaker-clocks { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.speaker-clock-label { font-size: 13.5px; color: var(--muted); margin-bottom: 5px; }
+.speaker-clock-value { font-size: 34px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.speaker-clock-value.late { color: var(--red); }
+.speaker-panel h2 { font-size: 24px; line-height: 1.4; }
+.speaker-panel h3 { font-size: 15px; color: var(--muted); font-weight: 500; }
+.speaker-note { font-size: 17.5px; line-height: 1.85; }
+.speaker-note p + p { margin-top: 15px; }
+.speaker-next { border-top: 1px solid var(--line); padding-top: 16px; }
+.speaker-next p { font-size: 18px; line-height: 1.5; margin-top: 7px; }
+.speaker-sources {
+  border-top: 1px solid var(--line); padding-top: 16px;
+  font-size: 13px; line-height: 1.75; color: var(--muted); overflow-wrap: anywhere;
+}
+.speaker-sources li { margin: 7px 0; }
+.speaker-sources code { font-family: "JetBrains Mono", Consolas, monospace; }
+.speaker-hint { font-size: 12.5px; color: #98a2a7; border-top: 1px solid var(--line); padding-top: 12px; }
+
+@media screen and (max-width: 1100px) {
+  body.presenter .presentation-area { grid-template-columns: 1fr; }
+  body.presenter .frame { margin: 0 auto; }
+  body.presenter .speaker-panel { max-height: none; overflow: visible; }
+}
+
+/* ---------- 小屏：纵向排版，不再缩放 ---------- */
+@media screen and (max-width: 760px), screen and (max-width: 1024px) and (max-height: 500px) {
+  body { background: var(--paper); }
+  .app { grid-template-rows: minmax(0, 1fr) 58px; }
+  .presentation-area { display: block; padding: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .frame { width: 100% !important; height: auto !important; box-shadow: none; }
+  .slides { width: 100%; height: auto; transform: none; }
+  .slide { position: relative; inset: auto; width: 100%; height: auto; min-height: calc(100dvh - 62px); padding: 28px 22px 22px; gap: 24px; }
+  .slide h2 { font-size: 28px; line-height: 1.4; }
+  .slide h2::after { margin-top: 13px; width: 42px; height: 2px; }
+  .slide-content { gap: 22px; }
+  .lead { font-size: 20px; }
+  .bullets > div { font-size: 18px; }
+  .split, .cards.c3, .cards.c2, .steps { grid-template-columns: 1fr; gap: 20px; }
+  .windows { grid-template-columns: 1fr; gap: 14px; }
+  .wire { display: none; }
+  .kpis { flex-wrap: wrap; gap: 26px; }
+  .kpi b { font-size: 34px; }
+  .code { font-size: 13px; overflow-x: auto; }
+  .table { font-size: 15px; }
+  .slide.cover { padding: 40px 22px 26px; }
+  .cover h1 { font-size: 40px; }
+  .cover-sub { font-size: 17px; }
+  .cover-stats { flex-wrap: wrap; gap: 28px; }
+  .fit-window { width: 100%; height: 190px; }
+  .fit-frame { width: 78%; height: 140px; }
+  .sheets { flex-wrap: wrap; }
+  body.presenter .presentation-area { display: block; padding: 0; overflow: auto; }
+  body.presenter .speaker-panel { display: flex; padding: 22px; }
+}
+
+/* ---------- 打印：每一页正好一张 16:9 ---------- */
+@media print {
+  @page { size: 338.667mm 190.5mm; margin: 0; }
+  html, body { width: 1280px; margin: 0; padding: 0; background: #fff; overflow: visible; }
+  .app, body.presenter .app { display: block; width: 1280px; height: auto; }
+  .presentation-area, body.presenter .presentation-area { display: block; width: 1280px; padding: 0; overflow: visible; }
+  .frame { width: 1280px !important; height: auto !important; box-shadow: none; }
+  .slides { width: 1280px; height: auto; transform: none !important; }
+  .slide, .slide[hidden] {
+    display: flex !important; position: relative; width: 1280px; height: 720px; min-height: 0;
+    padding: 42px 70px 26px; break-after: page; page-break-after: always;
+    print-color-adjust: exact; -webkit-print-color-adjust: exact;
+  }
+  .slide:last-child { break-after: auto; page-break-after: auto; }
+  .toolbar, .progress, .speaker-panel, dialog, .toast, .blackout { display: none !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-fill { transition: none; }
+}
+
+/* ============================================================================
+   theme.css — 覆盖引擎的默认样式
+   构建时会被拼在 deck.css 后面，所以这里的规则天然优先。
+   只改配色的话，取消下面几行的注释就够了。
+   ========================================================================== */
+
+:root {
+  /* --red: #b43c35; */      /* 主题色：标题短线、强调、进度条 */
+  /* --ink: #202528; */      /* 正文 */
+  /* --muted: #687278; */    /* 次要文字、页脚 */
+  /* --line: #dde3e6; */     /* 分隔线 */
+  /* --paper: #ffffff; */    /* 页面底色 */
+}
+
+/* 想微调某一处，直接写同名规则覆盖即可，例如：
+
+.slide h2 { font-size: 34px; }
+.slide.cover { background: #faf8f5; }
+.card { border-radius: 10px; }
+*/
+</style>
+</head>
+<body>
+  <main class="app" aria-label="示例演示：从内容到单文件">
+    <div class="presentation-area">
+      <div class="frame"><div class="slides">
+  <section id="slide-cover" class="slide cover" data-slide="0" aria-hidden="false" aria-label="示例演示：从内容到单文件">
+    
+    <div class="slide-content">
+<div class="cover">
+  <p class="kicker">课题组周会 · 2026 秋季</p>
+  <h1>一句话说清这份<br><em>材料在讲什么</em></h1>
+  <p class="cover-sub">副标题可以写研究问题、数据规模或结论的版本号。<br>两行以内，不要超过三行。</p>
+  <div class="cover-stats">
+    <div><b>12</b><span>页</span></div>
+    <div><b>20</b><span>分钟</span></div>
+    <div><b>3</b><span>个主要结论</span></div>
+  </div>
+</div></div>
+    <footer class="slide-footer"><span>汇报人 · 2026</span><span>01 / 5</span></footer>
+  </section>
+
+  <section id="slide-summary" class="slide" data-slide="1" hidden inert aria-hidden="true" aria-label="先给结论，再给证据">
+    <header><div class="story-position" aria-label="当前环节：开场"><span class="position-current">开场</span><span class="sep">›</span><span>方法</span><span class="sep">›</span><span>结果</span><span class="sep">›</span><span>下一步</span></div><h2>先给结论，再给证据</h2></header>
+    <div class="slide-content">
+<p class="lead">把最重要的判断放在最前面。听众只需要记住 <em>三件事</em>，剩下的都是支撑。</p>
+<div class="cards c3">
+  <div class="card"><div class="num">01</div><div class="ttl">结论一</div><div class="p">一句话写清楚，不要用「有一定提升」这种糊说法，给方向和量级。</div></div>
+  <div class="card"><div class="num">02</div><div class="ttl">结论二</div><div class="p">第二条同样要具体：在什么设置下、相对什么基线、差多少。</div></div>
+  <div class="card"><div class="num">03</div><div class="ttl">结论三</div><div class="p">如果暂时没有第三个结论，就删掉这张卡，不要凑数。</div></div>
+</div>
+<table class="table">
+  <thead><tr><th style="width:20%">结论</th><th style="width:40%">证据</th><th>在第几页</th></tr></thead>
+  <tbody>
+    <tr><td>结论一</td><td>主实验对比</td><td>第 3 页</td></tr>
+    <tr><td>结论二</td><td>消融</td><td>第 4 页</td></tr>
+    <tr><td>结论三</td><td>边界条件</td><td>第 4 页</td></tr>
+  </tbody>
+</table>
+<div class="callout">下面每一页都能回答「这一页在支撑上面哪一条」。答不上来的页，删掉。</div></div>
+    <footer class="slide-footer"><span>每一页只讲一件事</span><span>02 / 5</span></footer>
+  </section>
+
+  <section id="slide-setup" class="slide" data-slide="2" hidden inert aria-hidden="true" aria-label="把设置讲清楚，比讲结果重要">
+    <header><div class="story-position" aria-label="当前环节：方法"><span>开场</span><span class="sep">›</span><span class="position-current">方法</span><span class="sep">›</span><span>结果</span><span class="sep">›</span><span>下一步</span></div><h2>把设置讲清楚，比讲结果重要</h2></header>
+    <div class="slide-content">
+<div class="kpis">
+  <div class="kpi hot"><b>12 万</b><span>条偏好对</span></div>
+  <div class="kpi"><b>2</b><span>个模型规模</span></div>
+  <div class="kpi"><b>4</b><span>个评测集</span></div>
+  <div class="kpi"><b>3</b><span>个 epoch</span></div>
+</div>
+<table class="table">
+  <thead><tr><th style="width:24%">变量</th><th style="width:30%">取值</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td>模型</td><td>7B / 32B</td><td>同一个 base，只换规模</td></tr>
+    <tr><td>数据</td><td>12 万条偏好对</td><td>与基线完全同分布，不做重采样</td></tr>
+    <tr><td>训练</td><td>3 epoch，lr 1e-6</td><td>超参沿用主实验，未针对本组调参</td></tr>
+    <tr><td>评测</td><td>4 个 benchmark</td><td>报告平均分与最差一项</td></tr>
+  </tbody>
+</table>
+<p class="tiny">脚注写清楚哪些是复现、哪些引用自原论文，避免被追问时说不清。</p>
+<div class="callout">时间不够时只讲「数据」这一行——它是后面所有结论的前提，其余三行留给提问环节。</div></div>
+    <footer class="slide-footer"><span>表格只留三列：变量、取值、说明</span><span>03 / 5</span></footer>
+  </section>
+
+  <section id="slide-result" class="slide" data-slide="3" hidden inert aria-hidden="true" aria-label="一张图讲完主要结果">
+    <header><div class="story-position" aria-label="当前环节：结果"><span>开场</span><span class="sep">›</span><span>方法</span><span class="sep">›</span><span class="position-current">结果</span><span class="sep">›</span><span>下一步</span></div><h2>一张图讲完主要结果</h2></header>
+    <div class="slide-content">
+<div class="split ratio-6-4 stretch">
+  <figure class="figure zoomable">
+    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3NjAgNDYwIiB3aWR0aD0iNzYwIiBoZWlnaHQ9IjQ2MCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSLnpLrkvovmn7Hnirblm74iPgogIDxyZWN0IHdpZHRoPSI3NjAiIGhlaWdodD0iNDYwIiBmaWxsPSIjZmZmZmZmIi8+CgogIDwhLS0g572R5qC857q/IC0tPgogIDxnIHN0cm9rZT0iI2VlZjFmMiIgc3Ryb2tlLXdpZHRoPSIxIj4KICAgIDxsaW5lIHgxPSIxMTAiIHkxPSIzODAiIHgyPSI3MjYiIHkyPSIzODAiLz4KICAgIDxsaW5lIHgxPSIxMTAiIHkxPSIzMDQiIHgyPSI3MjYiIHkyPSIzMDQiLz4KICAgIDxsaW5lIHgxPSIxMTAiIHkxPSIyMjgiIHgyPSI3MjYiIHkyPSIyMjgiLz4KICAgIDxsaW5lIHgxPSIxMTAiIHkxPSIxNTIiIHgyPSI3MjYiIHkyPSIxNTIiLz4KICAgIDxsaW5lIHgxPSIxMTAiIHkxPSI3NiIgIHgyPSI3MjYiIHkyPSI3NiIvPgogIDwvZz4KICA8bGluZSB4MT0iMTEwIiB5MT0iNDAiIHgyPSIxMTAiIHkyPSIzODAiIHN0cm9rZT0iI2RkZTNlNiIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KCiAgPCEtLSDmn7EgLS0+CiAgPGc+CiAgICA8cmVjdCB4PSIxNDIiIHk9IjI1MCIgd2lkdGg9Ijc4IiBoZWlnaHQ9IjEzMCIgZmlsbD0iI2UyZThlYSIvPgogICAgPHJlY3QgeD0iMjU0IiB5PSIyMDUiIHdpZHRoPSI3OCIgaGVpZ2h0PSIxNzUiIGZpbGw9IiNkNmRlZTEiLz4KICAgIDxyZWN0IHg9IjM2NiIgeT0iMTcwIiB3aWR0aD0iNzgiIGhlaWdodD0iMjEwIiBmaWxsPSIjYzlkM2Q3Ii8+CiAgICA8cmVjdCB4PSI0NzgiIHk9IjEyNSIgd2lkdGg9Ijc4IiBoZWlnaHQ9IjI1NSIgZmlsbD0iI2I5YzZjYSIvPgogICAgPHJlY3QgeD0iNTkwIiB5PSI1MCIgIHdpZHRoPSI3OCIgaGVpZ2h0PSIzMzAiIGZpbGw9IiNiNDNjMzUiLz4KICA8L2c+CgogIDwhLS0g5qCH562+IC0tPgogIDxnIGZpbGw9IiM2ODcyNzgiIGZvbnQtZmFtaWx5PSJQaW5nRmFuZyBTQywgTm90byBTYW5zIENKSyBTQywgTWljcm9zb2Z0IFlhSGVpLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE3IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4KICAgIDx0ZXh0IHg9IjE4MSIgeT0iNDEwIj7ln7rnur88L3RleHQ+CiAgICA8dGV4dCB4PSIyOTMiIHk9IjQxMCI+KyBBPC90ZXh0PgogICAgPHRleHQgeD0iNDA1IiB5PSI0MTAiPisgQjwvdGV4dD4KICAgIDx0ZXh0IHg9IjUxNyIgeT0iNDEwIj4rIEM8L3RleHQ+CiAgICA8dGV4dCB4PSI2MjkiIHk9IjQxMCIgZmlsbD0iI2I0M2MzNSIgZm9udC13ZWlnaHQ9IjYwMCI+5pys5paHPC90ZXh0PgogIDwvZz4KICA8ZyBmaWxsPSIjOWFhNGE5IiBmb250LWZhbWlseT0iUGluZ0ZhbmcgU0MsIE5vdG8gU2FucyBDSksgU0MsIE1pY3Jvc29mdCBZYUhlaSwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgdGV4dC1hbmNob3I9ImVuZCI+CiAgICA8dGV4dCB4PSI5NiIgeT0iMzA5Ij4wLjY8L3RleHQ+CiAgICA8dGV4dCB4PSI5NiIgeT0iMjMzIj4wLjc8L3RleHQ+CiAgICA8dGV4dCB4PSI5NiIgeT0iMTU3Ij4wLjg8L3RleHQ+CiAgICA8dGV4dCB4PSI5NiIgeT0iODEiPjAuOTwvdGV4dD4KICA8L2c+CiAgPHRleHQgeD0iMTEwIiB5PSIyNCIgZmlsbD0iIzlhYTRhOSIgZm9udC1mYW1pbHk9IlBpbmdGYW5nIFNDLCBOb3RvIFNhbnMgQ0pLIFNDLCBNaWNyb3NvZnQgWWFIZWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiPmFjY3VyYWN5IOKGkTwvdGV4dD4KPC9zdmc+Cg==" alt="示例示意图">
+    <figcaption>示例图：点一下可以整屏放大，滚轮缩放；换成你自己的结果图即可。</figcaption>
+  </figure>
+  <div class="stack">
+    <h3 class="h3">怎么读这张图</h3>
+    <div class="bullets">
+      <div><b>先看轴</b>：横轴是什么、纵轴单位是什么，一句话交代。</div>
+      <div><b>再看差</b>：和基线差多少，能不能被噪声解释。</div>
+      <div><b>最后看边界</b>：什么情况下这个结论不成立。</div>
+    </div>
+    <div class="callout">读图落点：先说轴，再说差，最后说边界——三句话讲完一张图，超过三句说明图没选对。</div>
+  </div>
+</div></div>
+    <footer class="slide-footer"><span>图片放进 images/ 目录，构建时会自动内联成单文件</span><span>04 / 5</span></footer>
+  </section>
+
+  <section id="slide-next" class="slide" data-slide="4" hidden inert aria-hidden="true" aria-label="接下来做什么">
+    <header><div class="story-position" aria-label="当前环节：下一步"><span>开场</span><span class="sep">›</span><span>方法</span><span class="sep">›</span><span>结果</span><span class="sep">›</span><span class="position-current">下一步</span></div><h2>接下来做什么</h2></header>
+    <div class="slide-content">
+<div class="steps">
+  <div class="step"><b>STEP 1</b><h4>本周</h4><p>把消融跑完，补齐 32B 的两组设置。</p></div>
+  <div class="step"><b>STEP 2</b><h4>下周</h4><p>整理成一张总图，确定投哪一篇。</p></div>
+  <div class="step"><b>STEP 3</b><h4>月底</h4><p>初稿写完，内部过一遍逻辑。</p></div>
+</div>
+<pre class="code"># 构建与自检
+html-deck build              # 改完 content.mjs 跑一次
+html-deck dev                # 或者开着它，存盘自动重建
+html-deck check --sync       # 版心溢出 + 讲者视图同步
+html-deck <span class="k">export</span> --pdf       # 交给导师的版本
+html-deck <span class="k">export</span> --png       # 每页一张 <span class="n">2560</span>×<span class="n">1440</span>，贴进任何地方</pre>
+<div class="callout">三步里只有第一步是本周必须做完的；二和三可以并行，不要串成一条链。</div></div>
+    <footer class="slide-footer"><span>给明确的时间点，不要写「后续计划」</span><span>05 / 5</span></footer>
+  </section></div></div>
+      <aside class="speaker-panel" aria-label="讲者备注">
+        <div class="speaker-clocks">
+          <div><p class="speaker-clock-label">已用时间</p><p id="speaker-elapsed" class="speaker-clock-value">00:00</p></div>
+          <div><p class="speaker-clock-label">累计计划时间</p><p id="speaker-plan" class="speaker-clock-value">00:00</p></div>
+        </div>
+        <h2 id="speaker-current"></h2>
+        <div id="speaker-notes" class="speaker-note"></div>
+        <div class="speaker-next"><h3>下一页</h3><p id="speaker-next"></p></div>
+        <div class="speaker-sources"><h3>本页出处</h3><ul id="speaker-sources"></ul></div>
+        <p class="speaker-hint">← → 翻页 · N 讲者视图 · O 目录 · B 黑屏 · F 全屏</p>
+      </aside>
+    </div>
+    <nav class="toolbar" aria-label="演示控制">
+      <div class="toolbar-group">
+        <button id="previous-button" class="icon-button" type="button" title="上一页" aria-label="上一页" disabled><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+        <span id="page-status" class="page-status" aria-live="polite">01 / 5</span>
+        <button id="next-button" class="icon-button" type="button" title="下一页" aria-label="下一页" ><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+      </div>
+      <span id="toolbar-title" class="toolbar-title">封面</span>
+      <div id="clock-actions" class="clock-actions" hidden>
+        <button id="clock-toggle" class="icon-button" type="button" title="开始计时" aria-label="开始计时" ><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4.8v14.4L19.6 12z" fill="currentColor" stroke="none"/></svg></button>
+        <button id="clock-reset" class="icon-button" type="button" title="重置计时" aria-label="重置计时" ><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
+      </div>
+      <div class="toolbar-group">
+        <button id="overview-button" class="icon-button" type="button" title="页面列表" aria-label="页面列表" ><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg></button>
+        <button id="presenter-button" class="icon-button" type="button" title="讲者视图" aria-label="讲者视图" ><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a3 3 0 0 0-3 3v1H5a2 2 0 0 0-2 2v3h18V9a2 2 0 0 0-2-2h-4V6a3 3 0 0 0-3-3z"/><path d="m3 12 2 7a2 2 0 0 0 2 1.6h10A2 2 0 0 0 19 19l2-7"/></svg></button>
+        <button id="print-button" class="icon-button" type="button" title="打印 / 导出 PDF" aria-label="打印 / 导出 PDF" ><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button>
+        <button id="fullscreen-button" class="icon-button" type="button" title="全屏" aria-label="全屏" ><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+      </div>
+    </nav>
+  </main>
+  <div class="progress" aria-hidden="true"><div class="progress-fill"></div></div>
+  <dialog id="overview-dialog" class="overview-dialog" aria-labelledby="overview-title">
+    <div class="dialog-header"><h2 id="overview-title">页面列表</h2><button id="overview-close" class="icon-button" type="button" title="关闭页面列表" aria-label="关闭页面列表" data-close-dialog="overview-dialog"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+    <div class="overview-list">
+  
+  <button class="overview-item" type="button" aria-current="page">
+    <span class="overview-number">01</span>
+    <span class="overview-heading">示例演示：从内容到单文件</span>
+    <svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+  </button>
+
+  <p class="overview-section">开场</p>
+  <button class="overview-item" type="button">
+    <span class="overview-number">02</span>
+    <span class="overview-heading">先给结论，再给证据</span>
+    <svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+  </button>
+
+  <p class="overview-section">方法</p>
+  <button class="overview-item" type="button">
+    <span class="overview-number">03</span>
+    <span class="overview-heading">把设置讲清楚，比讲结果重要</span>
+    <svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+  </button>
+
+  <p class="overview-section">结果</p>
+  <button class="overview-item" type="button">
+    <span class="overview-number">04</span>
+    <span class="overview-heading">一张图讲完主要结果</span>
+    <svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+  </button>
+
+  <p class="overview-section">下一步</p>
+  <button class="overview-item" type="button">
+    <span class="overview-number">05</span>
+    <span class="overview-heading">接下来做什么</span>
+    <svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+  </button></div>
+  </dialog>
+  <dialog id="zoom-dialog" class="zoom-dialog" aria-labelledby="zoom-title">
+    <div class="dialog-header">
+      <h2 id="zoom-title">图示</h2>
+      <div class="zoom-actions">
+        <button id="zoom-out" class="icon-button" type="button" title="缩小" aria-label="缩小" ><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+        <span id="zoom-value" class="zoom-value">100%</span>
+        <button id="zoom-in" class="icon-button" type="button" title="放大" aria-label="放大" ><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+        <button id="zoom-fit" class="icon-button" type="button" title="适合窗口" aria-label="适合窗口" ><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></svg></button>
+        <button id="zoom-close" class="icon-button" type="button" title="关闭" aria-label="关闭" data-close-dialog="zoom-dialog"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+    </div>
+    <div class="zoom-scroll"><div id="zoom-stage"></div></div>
+  </dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <div id="blackout" class="blackout" hidden aria-label="黑屏"></div>
+  <script id="deck-metadata" type="application/json">{"title":"示例演示：从内容到单文件","subtitle":"一句话说清这份材料要回答什么问题","prepared":"2026-11-09","version":"0.1.0","totalSeconds":490,"stages":["开场","方法","结果","下一步"],"slides":[{"id":"cover","heading":"示例演示：从内容到单文件","short":"封面","stage":null,"seconds":40,"notes":["开场不要念标题。用一句话说清：这次汇报要回答什么问题，为什么现在要回答它。","讲者视图里的这一段只给你自己看，投影片上不会出现。"],"sources":["数据来源：填写实验编号 / 论文标题"]},{"id":"summary","heading":"先给结论，再给证据","short":"结论先行","stage":"开场","seconds":100,"notes":["这一页是全场最容易被记住的一页，写完再回头检查一遍：三条结论之间有没有重叠。","卡片的字号已经调好，超过三行就会挤；写不下说明结论还不够锋利。"],"sources":[]},{"id":"setup","heading":"把设置讲清楚，比讲结果重要","short":"实验设置","stage":"方法","seconds":120,"notes":["设置页不要念表格，挑两个最容易被质疑的点说：为什么用这个数据、为什么没调参。","评审最喜欢问的就是「你是不是只在自己有利的设置上比」。"],"sources":["原论文 Table 2","本地复现脚本 run_setup.sh"]},{"id":"result","heading":"一张图讲完主要结果","short":"主要结果","stage":"结果","seconds":150,"notes":["这页的目标不是让听众看清每个数字，是让他们相信「差异是真的」。所以先讲轴和基线，再讲差。","如果被问到误差棒，要能立刻说清楚是自己算的还是原论文报的。"],"sources":["images/sample.svg（占位图，记得替换）"]},{"id":"next","heading":"接下来做什么","short":"下一步","stage":"下一步","seconds":80,"notes":["结尾别写「谢谢」，写下一步和需要谁配合。","这一页的代码块是提示：这份文件本身就可以用三条命令维护。"],"sources":[]}]}</script>
+  <script>/* ============================================================================
+   player.js — 演示运行时
+   职责：缩放画布 / 翻页 / 讲者视图双窗口同步 / 计时 / 目录 / 放大 / 打印
+   约定：主窗口是唯一真相源，讲者窗口只是镜像 + 遥控器。
+   ========================================================================== */
+(() => {
+  "use strict";
+
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 4.8v14.4L19.6 12z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="4.6" width="3.7" height="14.8" rx="1"/><rect x="13.3" y="4.6" width="3.7" height="14.8" rx="1"/></svg>',
+    maximize: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>',
+    minimize: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>',
+  };
+
+  const meta = JSON.parse(document.getElementById("deck-metadata").textContent);
+  const slides = Array.from(document.querySelectorAll(".slide"));
+  const area = document.querySelector(".presentation-area");
+  const frame = document.querySelector(".frame");
+  const counter = document.getElementById("page-status");
+  const progress = document.querySelector(".progress-fill");
+  const overview = document.getElementById("overview-dialog");
+  const zoomDialog = document.getElementById("zoom-dialog");
+  const zoomStage = document.getElementById("zoom-stage");
+  const blackout = document.getElementById("blackout");
+
+  const params = new URLSearchParams(location.search);
+  const compact = matchMedia("(max-width: 760px), (max-width: 1024px) and (max-height: 500px)");
+  const isPresenter = params.get("presenter") === "1";
+  const session = params.get("session") ||
+    globalThis.crypto?.randomUUID?.() || `deck-${Date.now()}-${Math.random()}`;
+
+  let currentIndex = 0;
+  let speakerWindow = null;
+  let zoomScale = 1;
+  let toastTimer;
+  let pointerStart = null;
+  let clockRunning = false;
+  let clockAccumulated = 0;
+  let clockStartedAt = 0;
+  let presenterElapsed = 0;
+  let clockStarted = false;
+
+  const formatTime = ms => {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+  };
+  const elapsed = () => clockAccumulated + (clockRunning ? Date.now() - clockStartedAt : 0);
+  const announce = text => {
+    const toast = document.getElementById("toast");
+    clearTimeout(toastTimer);
+    toast.textContent = text;
+    toast.hidden = false;
+    toastTimer = setTimeout(() => { toast.hidden = true; }, 3600);
+  };
+
+  /* ---------- 1. 画布缩放：永远 1280×720，只缩放不重排 ---------- */
+  function resize() {
+    if (compact.matches) {
+      frame.style.removeProperty("width");
+      frame.style.removeProperty("height");
+      document.documentElement.style.setProperty("--scale", "1");
+      return;
+    }
+    const style = getComputedStyle(area);
+    const availableWidth = area.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    const availableHeight = area.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+    // 讲者视图是两栏：幻灯片那一栏只占约 1.15/1.95 的宽度
+    const width = isPresenter && innerWidth > 1100 ? (availableWidth - 26) * 1.15 / 1.95 : availableWidth;
+    const scale = Math.max(.2, Math.min(width / 1280, availableHeight / 720, 1.65));
+    document.documentElement.style.setProperty("--scale", String(scale));
+    frame.style.width = `${1280 * scale}px`;
+    frame.style.height = `${720 * scale}px`;
+  }
+
+  /* ---------- 2. 讲者视图的内容填充 ---------- */
+  function updateSpeaker() {
+    const slide = meta.slides[currentIndex];
+    document.getElementById("speaker-current").textContent = slide.heading;
+    document.getElementById("speaker-notes").replaceChildren(...slide.notes.map(text => {
+      const p = document.createElement("p");
+      p.textContent = text;
+      return p;
+    }));
+    document.getElementById("speaker-next").textContent = meta.slides[currentIndex + 1]?.heading || "结束";
+    const planned = meta.slides.slice(0, currentIndex + 1).reduce((sum, item) => sum + item.seconds, 0);
+    document.getElementById("speaker-plan").textContent = formatTime(planned * 1000);
+    document.getElementById("speaker-sources").replaceChildren(...(slide.sources || []).map(text => {
+      const li = document.createElement("li");
+      li.textContent = text;
+      return li;
+    }));
+  }
+
+  /* ---------- 3. 主窗口 → 讲者窗口的状态广播 ---------- */
+  function postState() {
+    if (!speakerWindow || speakerWindow.closed) return;
+    speakerWindow.postMessage({
+      channel: session,
+      type: "state",
+      index: currentIndex,
+      elapsed: elapsed(),
+      running: clockRunning,
+    }, "*");
+  }
+
+  /* ---------- 4. 翻页 ---------- */
+  function goTo(index, {broadcast = true, user = false} = {}) {
+    if (!Number.isFinite(index)) return;
+    const next = Math.max(0, Math.min(slides.length - 1, Math.trunc(index)));
+    const previous = currentIndex;
+    currentIndex = next;
+    slides.forEach((slide, number) => {
+      const active = number === currentIndex;
+      slide.hidden = !active;
+      slide.inert = !active;
+      slide.setAttribute("aria-hidden", String(!active));
+    });
+    counter.textContent = `${String(currentIndex + 1).padStart(2, "0")} / ${slides.length}`;
+    document.getElementById("toolbar-title").textContent = meta.slides[currentIndex].short || meta.slides[currentIndex].heading;
+    document.getElementById("previous-button").disabled = currentIndex === 0;
+    document.getElementById("next-button").disabled = currentIndex === slides.length - 1;
+    progress.style.width = `${((currentIndex + 1) / slides.length) * 100}%`;
+    document.querySelectorAll(".overview-item").forEach((item, number) => {
+      if (number === currentIndex) item.setAttribute("aria-current", "page");
+      else item.removeAttribute("aria-current");
+    });
+    try {
+      history.replaceState(null, "", `#slide-${meta.slides[currentIndex].id}`);
+    } catch {}
+    if (isPresenter) updateSpeaker();
+    if (user && currentIndex !== previous && !isPresenter) {
+      if (!clockStarted && currentIndex > 0) {
+        clockStarted = true;
+        clockRunning = true;
+        clockStartedAt = Date.now();
+      }
+      if (compact.matches) area.scrollTo({top: 0, behavior: "instant"});
+    }
+    if (broadcast) {
+      if (isPresenter && window.opener) {
+        window.opener.postMessage({channel: session, type: "navigate", index: currentIndex}, "*");
+      } else {
+        postState();
+      }
+    }
+  }
+
+  /* ---------- 5. 打开讲者视图：同文件 + ?presenter=1 ---------- */
+  function openPresenter() {
+    if (isPresenter) return;
+    const url = new URL(location.href);
+    url.searchParams.set("presenter", "1");
+    url.searchParams.set("session", session);
+    speakerWindow = window.open(url.href, `speaker-${session}`, "popup,width=1440,height=960");
+    if (!speakerWindow) announce("讲者窗口被浏览器拦截了");
+    else speakerWindow.focus();
+  }
+
+  async function fullscreen() {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+    } catch {
+      announce("当前窗口无法进入全屏");
+    }
+  }
+
+  /* ---------- 6. 计时器：数值只存在于主窗口 ---------- */
+  function updateClock() {
+    const ms = isPresenter ? presenterElapsed : elapsed();
+    document.getElementById("speaker-elapsed").textContent = formatTime(ms);
+    const toggle = document.getElementById("clock-toggle");
+    toggle.setAttribute("title", clockRunning ? "暂停计时" : "开始计时");
+    toggle.setAttribute("aria-label", clockRunning ? "暂停计时" : "开始计时");
+    const wanted = clockRunning ? "pause" : "play";
+    if (toggle.dataset.icon !== wanted) {
+      toggle.dataset.icon = wanted;
+      toggle.innerHTML = ICON[wanted];
+    }
+  }
+
+  function clockAction(action) {
+    if (isPresenter && window.opener) {
+      window.opener.postMessage({channel: session, type: "clock", action}, "*");
+      return;
+    }
+    if (action === "reset") {
+      clockAccumulated = 0;
+      clockRunning = false;
+      clockStarted = false;
+      clockStartedAt = 0;
+    } else if (clockRunning) {
+      clockAccumulated = elapsed();
+      clockRunning = false;
+    } else {
+      clockStarted = true;
+      clockRunning = true;
+      clockStartedAt = Date.now();
+    }
+    updateClock();
+    if (isPresenter) updateSpeaker();
+    postState();
+  }
+
+  /* ---------- 7. 点任何 .zoomable 都能放大看得更清 ---------- */
+  function applyZoom(value) {
+    const item = zoomStage.firstElementChild;
+    if (!item) return;
+    zoomScale = Math.min(4, Math.max(.2, value));
+    item.style.zoom = String(zoomScale);
+    document.getElementById("zoom-value").textContent = `${Math.round(zoomScale * 100)}%`;
+  }
+
+  function fitZoom() {
+    const item = zoomStage.firstElementChild;
+    if (!item) return;
+    item.style.zoom = "1";
+    const w = item.offsetWidth;
+    const h = item.offsetHeight;
+    if (!w || !h) return;
+    const scroll = zoomDialog.querySelector(".zoom-scroll");
+    applyZoom(Math.min((scroll.clientWidth - 56) / w, (scroll.clientHeight - 56) / h, 2));
+  }
+
+  function openZoom(element) {
+    const clone = element.cloneNode(true);
+    clone.removeAttribute("id");
+    clone.querySelectorAll("[id]").forEach(node => node.removeAttribute("id"));
+    clone.classList.remove("zoomable");
+    zoomStage.replaceChildren(clone);
+    zoomDialog.showModal();
+    fitZoom();
+    zoomDialog.querySelector(".zoom-scroll").scrollTo(0, 0);
+  }
+
+  /* ---------- 8. 绑定控件 ---------- */
+  document.getElementById("previous-button").addEventListener("click", () => goTo(currentIndex - 1, {user: true}));
+  document.getElementById("next-button").addEventListener("click", () => goTo(currentIndex + 1, {user: true}));
+  document.getElementById("fullscreen-button").addEventListener("click", fullscreen);
+  document.getElementById("presenter-button").addEventListener("click", openPresenter);
+  document.getElementById("overview-button").addEventListener("click", () => overview.showModal());
+  document.getElementById("print-button").addEventListener("click", () => window.print());
+  document.getElementById("clock-toggle").addEventListener("click", () => clockAction("toggle"));
+  document.getElementById("clock-reset").addEventListener("click", () => clockAction("reset"));
+  document.getElementById("zoom-in").addEventListener("click", () => applyZoom(zoomScale * 1.25));
+  document.getElementById("zoom-out").addEventListener("click", () => applyZoom(zoomScale / 1.25));
+  document.getElementById("zoom-fit").addEventListener("click", fitZoom);
+  document.querySelectorAll("[data-close-dialog]").forEach(button => {
+    button.addEventListener("click", () => document.getElementById(button.dataset.closeDialog).close());
+  });
+  document.querySelectorAll(".overview-item").forEach((button, index) => {
+    button.addEventListener("click", () => {
+      goTo(index, {user: true});
+      overview.close();
+    });
+  });
+  document.querySelectorAll(".zoomable").forEach(element => {
+    element.addEventListener("click", () => openZoom(element));
+  });
+  [overview, zoomDialog].forEach(dialog => {
+    dialog.addEventListener("click", event => {
+      if (event.target !== dialog) return;
+      const rect = dialog.getBoundingClientRect();
+      if (event.clientX < rect.left || event.clientX > rect.right ||
+          event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
+    });
+  });
+
+  /* ---------- 9. 键盘 / 触屏 ---------- */
+  document.addEventListener("keydown", event => {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.target.closest("input, textarea, select, [contenteditable=true]")) return;
+    if (document.querySelector("dialog[open]")) return;
+    if (event.key === "Escape") { blackout.hidden = true; return; }
+    if (event.key === " " && event.target.closest("button, a")) return;
+    const actions = {
+      ArrowRight: () => goTo(currentIndex + 1, {user: true}),
+      PageDown: () => goTo(currentIndex + 1, {user: true}),
+      " ": () => goTo(currentIndex + 1, {user: true}),
+      ArrowLeft: () => goTo(currentIndex - 1, {user: true}),
+      PageUp: () => goTo(currentIndex - 1, {user: true}),
+      Home: () => goTo(0, {user: true}),
+      End: () => goTo(meta.slides.length - 1, {user: true}),
+      f: fullscreen, F: fullscreen,
+      o: () => overview.showModal(), O: () => overview.showModal(),
+      n: openPresenter, N: openPresenter,
+      b: () => { blackout.hidden = !blackout.hidden; },
+      B: () => { blackout.hidden = !blackout.hidden; },
+    };
+    if (actions[event.key]) {
+      event.preventDefault();
+      actions[event.key]();
+    }
+  });
+  blackout.addEventListener("click", () => { blackout.hidden = true; });
+  area.addEventListener("pointerdown", event => {
+    if (event.pointerType !== "touch" || !event.isPrimary || event.target.closest("button, a, .zoomable")) return;
+    pointerStart = {x: event.clientX, y: event.clientY};
+  }, {passive: true});
+  area.addEventListener("pointerup", event => {
+    if (!pointerStart) return;
+    const dx = event.clientX - pointerStart.x;
+    const dy = event.clientY - pointerStart.y;
+    pointerStart = null;
+    if (Math.abs(dx) > 75 && Math.abs(dx) > Math.abs(dy) * 1.6) {
+      goTo(currentIndex + (dx < 0 ? 1 : -1), {user: true});
+    }
+  }, {passive: true});
+  area.addEventListener("pointercancel", () => { pointerStart = null; });
+
+  /* ---------- 10. 双窗口协议 ---------- */
+  window.addEventListener("message", event => {
+    const data = event.data;
+    if (!data || data.channel !== session) return;      // 只认本场 session
+    if (isPresenter && event.source === window.opener && data.type === "state") {
+      if (!Number.isInteger(data.index) || !Number.isFinite(data.elapsed)) return;
+      presenterElapsed = Math.max(0, data.elapsed);
+      clockRunning = data.running === true;
+      goTo(data.index, {broadcast: false});
+      updateClock();
+    } else if (!isPresenter && event.source === speakerWindow) {
+      if (data.type === "ready") postState();
+      if (data.type === "navigate" && Number.isInteger(data.index)) goTo(data.index, {user: true});
+      if (data.type === "clock" && ["toggle", "reset"].includes(data.action)) clockAction(data.action);
+    }
+  });
+
+  /* ---------- 11. 用 #slide-id 记住看到哪一页 ---------- */
+  const indexFromHash = () => {
+    const value = location.hash.match(/^#slide-(.+)$/)?.[1];
+    if (!value) return -1;
+    if (/^\d+$/.test(value)) return Number(value) - 1;
+    return meta.slides.findIndex(slide => slide.id === value);
+  };
+  window.addEventListener("hashchange", () => {
+    const index = indexFromHash();
+    if (index >= 0) goTo(index);
+  });
+  window.addEventListener("resize", resize);
+  document.addEventListener("fullscreenchange", () => {
+    resize();
+    const button = document.getElementById("fullscreen-button");
+    const active = Boolean(document.fullscreenElement);
+    button.setAttribute("title", active ? "退出全屏" : "全屏");
+    button.setAttribute("aria-label", active ? "退出全屏" : "全屏");
+    button.innerHTML = ICON[active ? "minimize" : "maximize"];
+  });
+
+  /* ---------- 12. 启动 ---------- */
+  if (isPresenter) {
+    document.body.classList.add("presenter");
+    document.getElementById("presenter-button").hidden = true;
+    document.getElementById("clock-actions").hidden = false;
+    document.title = `${meta.title} · 讲者视图`;
+  }
+  const initial = indexFromHash();
+  goTo(initial >= 0 ? initial : 0, {broadcast: false});
+  updateClock();
+  resize();
+  if (isPresenter && window.opener) {
+    window.opener.postMessage({channel: session, type: "ready"}, "*");
+  }
+  setInterval(() => {
+    if (isPresenter && clockRunning) presenterElapsed += 1000;   // 两帧之间做平滑
+    updateClock();
+    if (!isPresenter) postState();
+  }, 1000);
+
+  // 供外部脚本/检查工具使用
+  globalThis.deck = Object.freeze({
+    get currentIndex() { return currentIndex; },
+    get length() { return slides.length; },
+    goTo,
+    resize,
+    meta,
+  });
+})();
+</script>
+</body>
+</html>

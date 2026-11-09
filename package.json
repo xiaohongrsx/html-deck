@@ -1,0 +1,48 @@
+{
+  "name": "html-deck",
+  "version": "0.1.0",
+  "description": "单文件 HTML 演示引擎：1280×720 定画布、演讲者视图、离线自包含，可导出 PDF / PNG",
+  "type": "module",
+  "bin": {
+    "html-deck": "cli.mjs"
+  },
+  "exports": {
+    ".": "./index.mjs"
+  },
+  "files": [
+    "cli.mjs",
+    "index.mjs",
+    "src",
+    "templates",
+    "examples",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "demo": "node cli.mjs build examples/demo --open",
+    "demo:check": "node cli.mjs check examples/demo --sync",
+    "test": "node cli.mjs version"
+  },
+  "keywords": [
+    "slides",
+    "presentation",
+    "html",
+    "offline",
+    "presenter-view",
+    "pdf",
+    "single-file"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xiaohongrsx/html-deck.git"
+  },
+  "homepage": "https://github.com/xiaohongrsx/html-deck#readme",
+  "bugs": {
+    "url": "https://github.com/xiaohongrsx/html-deck/issues"
+  }
+}
