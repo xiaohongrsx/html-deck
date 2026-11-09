@@ -25,6 +25,7 @@
   "scripts": {
     "demo": "node cli.mjs build examples/demo --open",
     "demo:check": "node cli.mjs check examples/demo --sync",
+    "demo:pages": "node cli.mjs build examples/demo && node scripts/copy-demo.mjs",
     "test": "node cli.mjs version"
   },
   "keywords": [

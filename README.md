@@ -2,6 +2,8 @@
 
 用写 Markdown 的心智写 HTML 演示：一份 `content.mjs`，一条命令，得到一个能离线打开、带演讲者视图、能打印成 PDF 的单文件网页。
 
+**在线预览：<https://xiaohongrsx.github.io/html-deck/>**（打开后按 <kbd>N</kbd> 试试讲者视图）
+
 ![示例封面](docs/images/cover.png)
 
 同一个文件按 <kbd>N</kbd> 就是讲者视图 —— 左边预览，右边备注、计时、下一页、本页出处：
