@@ -53,6 +53,16 @@ function validate(slides, stages, deckFile) {
         (!Number.isInteger(slide.stage) || slide.stage < 0 || slide.stage >= stages.length)) {
       problems.push(`${at}：stage 越界（0–${stages.length - 1}）`);
     }
+    if (slide.script !== undefined) {
+      const spoken = Array.isArray(slide.script) ? slide.script : [slide.script];
+      if (!spoken.length || spoken.some(text => typeof text !== "string" || !text.trim())) {
+        problems.push(`${at}：script 必须是非空字符串或字符串数组`);
+      }
+    }
+    if (slide.transition !== undefined &&
+        (typeof slide.transition !== "string" || !slide.transition.trim())) {
+      problems.push(`${at}：transition 必须是非空字符串`);
+    }
     seconds += slide.seconds || 0;
   });
   if (!slides.length) problems.push("一页都没有");
@@ -228,18 +238,41 @@ export async function buildDeck({dir = ".", out, quiet = false} = {}) {
   await fs.writeFile(outFile, html);
 
   const notesFile = path.join(deckDir, "讲稿.md");
+  const mmss = value => {
+    const total = Math.max(0, Math.round(value));
+    return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+  };
+  const starts = [];
+  slides.reduce((acc, slide) => { starts.push(acc); return acc + slide.seconds; }, 0);
+
   const script = [
     `# ${metadata.title}`,
     "",
     ...(metadata.subtitle ? [`> ${metadata.subtitle}`, ""] : []),
-    `共 ${slides.length} 页，计划 ${Math.round(totalSeconds / 60)} 分钟。由 html-deck ${PACKAGE.version} 从 content.mjs 生成。`,
+    `共 ${slides.length} 页，计划 ${Math.round(totalSeconds / 60)} 分钟（${mmss(totalSeconds)}）。由 html-deck ${PACKAGE.version} 从 content.mjs 生成。`,
     "",
-    ...slides.flatMap((slide, index) => [
-      `## ${String(index + 1).padStart(2, "0")} · ${slide.heading}`,
-      "",
-      ...slide.notes.flatMap(text => [text, ""]),
-      ...(slide.sources?.length ? [`出处：${slide.sources.join("；")}。`, ""] : []),
-    ]),
+    "## 时长一览",
+    "",
+    "| 页 | 标题 | 计划 | 累计 |",
+    "| --- | --- | --- | --- |",
+    ...slides.map((slide, index) =>
+      `| ${String(index + 1).padStart(2, "0")} | ${slide.heading.replace(/\|/g, "\\|")} | ${mmss(slide.seconds)} | ${mmss(starts[index] + slide.seconds)} |`),
+    "",
+    ...slides.flatMap((slide, index) => {
+      const spoken = slide.script === undefined
+        ? null
+        : (Array.isArray(slide.script) ? slide.script : [slide.script]);
+      return [
+        `## ${String(index + 1).padStart(2, "0")} · ${slide.heading}`,
+        "",
+        `${mmss(starts[index])} – ${mmss(starts[index] + slide.seconds)} · 计划 ${mmss(slide.seconds)}`,
+        "",
+        ...(spoken ?? slide.notes).flatMap(text => [text, ""]),
+        ...(spoken && slide.notes?.length ? [`> 备注：${slide.notes.join(" ")}`, ""] : []),
+        ...(slide.transition ? [`**过渡：${slide.transition}**`, ""] : []),
+        ...(slide.sources?.length ? [`来源：${slide.sources.join("；")}`, ""] : []),
+      ];
+    }),
   ].join("\n");
   await fs.writeFile(notesFile, script);
 

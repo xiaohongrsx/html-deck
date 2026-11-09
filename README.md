@@ -33,6 +33,7 @@ html-deck build --open
 - **不用管分辨率**：内容按 1280×720 写死，运行时整体缩放，投到任何屏幕都不跑版。
 - **讲者视图不用另做一份**：同一个 HTML 加 `?presenter=1` 就是讲者界面。
 - **交出去不会散**：图片、字体、图标全部内联进一个 HTML，拷到别人电脑上双击就能讲。
+- **讲稿一起生成**：`script` / `notes` 导出成带时长表的 `讲稿.md`，打印出来照着念。
 - **有验收标准**：`check` 用无头浏览器真的量每页有没有超出画布、两个窗口能不能同步。
 
 ## 命令
@@ -55,7 +56,7 @@ html-deck build --open
 ├─ theme.css        配色与版式的覆盖（可选）
 ├─ images/          图片，构建时自动 base64 内联
 ├─ index.html       产物，不要手改
-├─ 讲稿.md           产物：每页备注导出，可以直接打印
+├─ 讲稿.md           产物：口播稿 + 时长表，可以直接打印
 └─ export/          slides.pdf / slide-01.png …
 ```
 
@@ -77,6 +78,8 @@ export const slides = ({code, image}) => [
     notes: ["讲者视图里的第一段", "第二段"],
     sources: ["原论文 §3"],    // 讲者视图「本页出处」
     footer: "页脚左侧文字",
+    script: ["口播稿第一段", "第二段"],   // 可选：整段写进 讲稿.md
+    transition: "下一页的过渡句",          // 可选：讲稿里加粗
   },
 ];
 ```
@@ -98,6 +101,26 @@ image("loss.png")                        // 读 images/loss.png → data:image/p
 `.figure`（配 `zoomable` 可点开放大）`.windows`+`.win`+`.wire`（双窗口示意）`.fit-window` `.sheets` `.tag` `.chip`
 
 配色改 `theme.css` 顶部的变量即可。
+
+## 讲稿
+
+`build` 除了 `index.html`，还会生成 `讲稿.md` —— 一份可以直接打印、照着讲的口播稿。
+
+- 开头是**时长一览**表：每页计划时长 + 累计到这一页是多少分钟
+- 每页一节：页号、标题、时间区间（`02:20 – 04:20 · 计划 02:00`）
+- 正文优先用 `script`（口播稿）；这一页没写 `script` 就导出 `notes`
+- 有 `transition` 会加粗一句「过渡：…」，有 `sources` 会列「来源：…」
+- 写了 `script` 时，`notes` 作为 `> 备注：…` 附在正文下面（讲者视图里看到的仍然是 `notes`）
+
+```js
+{
+  script: ["今天讲三件事。", "第一件：为什么现在要解决它。"],  // 可选，几段都行
+  transition: "问题说清楚了，下面看别人做到哪一步。",            // 可选
+  notes: ["停两秒再翻页"],                                       // 讲者视图里的短备注
+}
+```
+
+示例的产物：[`examples/demo/讲稿.md`](examples/demo/讲稿.md)。
 
 ## 自检
 

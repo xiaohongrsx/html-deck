@@ -53,7 +53,7 @@ elapsed = accumulated + (now - startedAt)
 
 ## 5. 构建期把所有事做完
 
-`src/build.mjs` 读 `content.mjs` → 校验 → 内联 → 写 `index.html`：
+`src/build.mjs` 读 `content.mjs` → 校验 → 内联 → 写出两个文件：`index.html` 和 `讲稿.md`（口播稿 + 时长表）。
 
 1. 校验：`id` 唯一、`heading` / `notes` 非空、`seconds` 是正整数、`stage` 下标在 `stages` 范围内
 2. 内联：`deck.css`、`player.js`、`theme.css`、图片（base64）、元数据 JSON
