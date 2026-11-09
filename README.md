@@ -166,7 +166,7 @@ await exportDeck({dir: "新报告", formats: ["pdf", "png"], scale: 2});
 
 ## 示例
 
-[`examples/demo/`](examples/demo/) 是 5 页的完整例子：封面、要点、方法（表格 + 代码）、结果（图片）、下一步。
+[`examples/demo/`](examples/demo/) 是 7 页的完整例子：封面、要点、方法（表格 + 代码）、结果（图片）、主题案例、下一步、延伸阅读。最后两页演示 `role` 分层，讲稿里的类型列和「参考文献」分组就是它们带出来的。
 
 ```bash
 npm run demo          # 重新构建并打开
@@ -206,7 +206,7 @@ src/export.mjs     PDF 与 PNG 导出
 src/chrome.mjs     无头浏览器与 CDP 客户端（零依赖）
 src/scaffold.mjs   脚手架
 templates/         new 用的模板
-examples/demo/     5 页示例（含产物）
+examples/demo/     7 页示例（含产物）
 docs/              设计说明与截图
 ```
 
