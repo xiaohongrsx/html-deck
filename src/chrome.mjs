@@ -76,6 +76,9 @@ async function sweepStale(maxAge = 12 * 60 * 60 * 1000) {
 
 /* ---------- 一个极小的 CDP 客户端 ---------- */
 export async function connect(webSocketDebuggerUrl) {
+  if (typeof globalThis.WebSocket !== "function") {
+    throw new Error(`自检和导出需要内置 WebSocket，请用 Node 22 以上（当前 ${process.version}）`);
+  }
   const socket = new WebSocket(webSocketDebuggerUrl);
   await new Promise((resolve, reject) => {
     socket.onopen = resolve;

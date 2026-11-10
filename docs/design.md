@@ -70,7 +70,7 @@ img-src data:; font-src data:; connect-src 'none'
 
 ## 6. 自检用真的浏览器
 
-`src/chrome.mjs` 是一个零依赖的 CDP 客户端（Node 18+ 自带 `fetch`，Node 24 自带 `WebSocket`）：起一个 `--headless=new` 的 Chrome，用临时配置目录。
+`src/chrome.mjs` 是一个零依赖的 CDP 客户端（Node 22+ 自带 `fetch` 和 `WebSocket`）：起一个 `--headless=new` 的 Chrome，用临时配置目录。
 
 - 版心：逐页量 `scrollHeight - clientHeight`，负数就是溢出；再量内容底边到页脚的距离（底边余量）
 - 同步：真的开两个窗口，验证 `postMessage` 双向都能到

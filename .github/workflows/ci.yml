@@ -15,7 +15,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       # 无头 Chrome 量版心需要中文字体，否则中文变豆腐块，宽度量不准
       - name: 装中文字体

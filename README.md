@@ -12,7 +12,7 @@
 
 ## 快速开始
 
-需要 Node ≥ 18。自检和导出还需要本机装有 Chrome 或 Edge。
+需要 Node ≥ 22。自检和导出还需要本机装有 Chrome 或 Edge。
 
 ```bash
 git clone https://github.com/xiaohongrsx/html-deck.git

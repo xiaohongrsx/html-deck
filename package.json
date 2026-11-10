@@ -18,7 +18,7 @@
     "LICENSE"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "scripts": {
     "demo": "node cli.mjs build examples/demo --open",
