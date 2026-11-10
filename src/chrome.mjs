@@ -172,6 +172,8 @@ export async function startBrowser({headless = true, width = 1440, height = 900}
     "--disable-gpu", "--hide-scrollbars", "--no-first-run", "--no-default-browser-check",
     "--disable-extensions", "--disable-popup-blocking", `--window-size=${width},${height}`,
     `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "about:blank",
+    // CI 的容器里没有 user namespace，沙箱起不来
+    ...(process.env.CI ? ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"] : []),
   ];
   const modes = headless ? ["--headless=new", "--headless"] : [""];
   let child;

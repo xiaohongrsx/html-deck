@@ -1,0 +1,30 @@
+name: 自检
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 无头 Chrome 量版心需要中文字体，否则中文变豆腐块，宽度量不准
+      - name: 装中文字体
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk
+
+      - name: 构建示例
+        run: node cli.mjs build examples/demo
+
+      - name: 版心与讲者视图自检
+        run: node cli.mjs check examples/demo --sync
+
+      - name: 导出 PDF 并核对页数
+        run: node cli.mjs export examples/demo --pdf
