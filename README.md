@@ -1,5 +1,7 @@
 # html-deck
 
+[![自检](https://github.com/xiaohongrsx/html-deck/actions/workflows/ci.yml/badge.svg)](https://github.com/xiaohongrsx/html-deck/actions/workflows/ci.yml)
+
 用写 Markdown 的心智写 HTML 演示：一份 `content.mjs`，一条命令，得到一个能离线打开、带演讲者视图、能打印成 PDF 的单文件网页。
 
 **在线预览：<https://xiaohongrsx.github.io/html-deck/>**（打开后按 <kbd>N</kbd> 试试讲者视图）
